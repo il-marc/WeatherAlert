@@ -66,33 +66,12 @@ namespace WeatherAlert
             ChromeOptions options = new ChromeOptions();
             options.AddArgument("--window-size=1280,728");
             IWebDriver driver = new ChromeDriver(options);
-            IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
-            driver.Url = "https://gmail.com";
 
-            driver.FindElement(By.Id("identifierId")).SendKeys(config.GmailUsername + Keys.Enter);
-            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath("//*[@id='password']//input"))).SendKeys(config.GmailPassword + Keys.Enter);
+            var gmail = new GmailPage(driver);
 
-            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath("//div[contains(text(),'Написать') and @role=\"button\"]"))).Click();
-            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath("//textarea[@name='to']"))).SendKeys(config.GmailUsername + "@gmail.com");
-            driver.FindElement(By.XPath("//input[@name='subjectbox']")).SendKeys(subject);
-            driver.FindElement(By.XPath("//div[@aria-label='Тело письма' and @role='textbox']"))
-                .SendKeys(fiveDaysForecast + Keys.Control + Keys.Enter);
-            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath("//span[text()='Письмо отправлено.']")));
-
-            if (!driver.Title.StartsWith("Входящие"))
-            {
-                wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                    By.XPath("//a[@title='Входящие']"))).Click();
-            }
-            wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath("//span[text()='" + subject + "' and position() = last()]"))).Click();
-            var messageBody = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath("//*[@data-message-id and @data-legacy-message-id]/div[2]/div[3]"))).Text;
+            gmail.SighIn(config.GmailUsername, config.GmailPassword);
+            gmail.Send(config.GmailUsername + "@gmail.com", subject, fiveDaysForecast);
+            var messageBody = gmail.GetBodyBySubject(subject);
 
             Console.WriteLine("Тело письма:");
             Console.WriteLine(messageBody);
